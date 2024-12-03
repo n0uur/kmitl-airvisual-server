@@ -19,13 +19,22 @@ const port = process.env.PORT || 3100;
 // Function to fetch and update data every 10 minutes
 const fetchAndUpdateData = async () => {
   try {
-    const response = await axios.get(`http://api.airvisual.com/v2/nearest_city`, {
-      params: {
-        lat: 13.721434635446425,
-        lon: 100.78113540955499,
-        key: process.env.API_KEY,
-      },
-    });
+    const response = await axios
+      .get(`http://api.airvisual.com/v2/nearest_city`, {
+        params: {
+          lat: 13.721434635446425,
+          lon: 100.78113540955499,
+          key: process.env.API_KEY,
+        },
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
+
+    if (!response) {
+      return;
+    }
+
     const data = response.data.data;
 
     const newData = {
