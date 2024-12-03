@@ -1,4 +1,4 @@
-// server.js
+require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
@@ -8,10 +8,13 @@ const Data = require('./models/Data');
 
 const app = express();
 const port = 3100;
-const apiUrl = 'http://api.airvisual.com/v2/nearest_city?lat=13.721434635446425&lon=100.78113540955499&key=a10a5cc7-e04a-46e5-b2e4-f1d79bf8200c';
+const apiUrl = `http://api.airvisual.com/v2/nearest_city?lat=13.721434635446425&lon=100.78113540955499&key=${process.env.API_KEY}`;
 
+// MongoDB Connection URI using environment variables
+const dbURI = `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_HOSTNAME}:${process.env.DB_PORT}/${process.env.DB_DATABASE}`;
+console.log(dbURI)
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/airvisual', {useNewUrlParser: true, useUnifiedTopology: true})
+mongoose.connect(dbURI, {useNewUrlParser: true, useUnifiedTopology: true})
     .then(() => console.log('Connected to MongoDB'))
     .catch((err) => console.error('Failed to connect to MongoDB:', err));
 
