@@ -7,23 +7,17 @@ const dayjs = require("dayjs");
 const app = express();
 const port = process.env.PORT || 3100;
 
-// MongoDB Connection URI using environment variables
-// const dbURI = process.env.DB_CONNECTION_STRING;
-// console.log(dbURI);
-// // Connect to MongoDB
-// mongoose
-//   .connect(dbURI)
-//   .then(() => console.log("Connected to MongoDB"))
-//   .catch((err) => console.error("Failed to connect to MongoDB:", err));
-
-// Function to fetch and update data every 10 minutes
 const fetchAndUpdateData = async () => {
   try {
     const response = await axios
-      .get(`http://api.airvisual.com/v2/nearest_city`, {
+      // .get(`http://api.airvisual.com/v2/nearest_city`, {
+      .get(`http://api.airvisual.com/v2/city`, {
         params: {
-          lat: 13.721434635446425,
-          lon: 100.78113540955499,
+          // lat: 13.721434635446425,
+          // lon: 100.78113540955499,
+          city: "Bangkok",
+          state: "Bangkok",
+          country: "Thailand",
           key: process.env.API_KEY,
         },
       })
@@ -35,6 +29,18 @@ const fetchAndUpdateData = async () => {
       return;
     }
 
+    const cnaqiResponse = await axios
+      .get(`https://api.waqi.info/feed/geo:13.721434635446425;100.78113540955499/`, {
+        params: {
+          token: process.env.AQICN_API_KEY,
+        },
+      })
+      .then((response) => response.data.data)
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        return {};
+      });
+
     const data = response.data.data;
 
     const newData = {
@@ -44,10 +50,9 @@ const fetchAndUpdateData = async () => {
       location: data.location,
       pollution: data.current.pollution,
       weather: data.current.weather,
+      cnaqi: cnaqiResponse,
     };
 
-    // Replace the existing data in the database
-    // await Data.findOneAndReplace({}, newData, { upsert: true });
     await redis.set("air-quality-api", JSON.stringify(newData));
     console.log("Data updated successfully");
   } catch (error) {
@@ -55,11 +60,8 @@ const fetchAndUpdateData = async () => {
   }
 };
 
-// Fetch and update data every 10 minutes
-// cron.schedule("*/10 * * * *", fetchAndUpdateData);
-
 // Initial fetch on server start
-fetchAndUpdateData();
+// fetchAndUpdateData();
 
 // Enable CORS for all routes
 app.use(cors());
