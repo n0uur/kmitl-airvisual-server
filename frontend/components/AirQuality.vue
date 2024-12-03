@@ -144,7 +144,7 @@ updateTheme(aqi.value);
       </div>
       <div class="mt-4 flex flex-row gap-4 justify-between mr-10">
         <div>สารมลพิษหลัก: {{ pollutant }}</div>
-        <div>{{ concentration }} µg/m³</div>
+        <div>{{ concentration }} µg/m<sup>3</sup></div>
       </div>
     </div>
     <div class="mt-4 px-6 flex justify-between text-gray-700 bg-white min-h-[44px] font-semibold">
