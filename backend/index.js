@@ -1,8 +1,8 @@
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
-const cron = require("node-cron");
 const redis = require("./lib/redis");
+const dayjs = require("dayjs");
 
 const app = express();
 const port = process.env.PORT || 3100;
@@ -47,7 +47,7 @@ const fetchAndUpdateData = async () => {
 };
 
 // Fetch and update data every 10 minutes
-cron.schedule("*/10 * * * *", fetchAndUpdateData);
+// cron.schedule("*/10 * * * *", fetchAndUpdateData);
 
 // Initial fetch on server start
 fetchAndUpdateData();
@@ -58,6 +58,14 @@ app.use(cors());
 // Route to get stored data
 app.get("/", async (req, res) => {
   try {
+    const lastUpdate = await redis
+      .get("air-quality-api-last-update")
+      .then((data) => dayjs(data))
+      .catch(() => {});
+    if (!lastUpdate || dayjs().diff(lastUpdate, "minutes") > 10) {
+      await fetchAndUpdateData();
+    }
+
     // const data = await Data.findOne({});
     const data = await redis.get("air-quality-api").catch(() => {});
     if (!data) {
@@ -66,6 +74,12 @@ app.get("/", async (req, res) => {
     res.json(JSON.parse(data));
   } catch (error) {
     res.status(500).json({ message: "Error fetching data", error });
+  }
+
+  try {
+    await redis.set("air-quality-api-last-update", dayjs().toISOString());
+  } catch (error) {
+    console.error("Error setting last update:", error);
   }
 });
 
