@@ -1,4 +1,11 @@
 <script setup lang="ts">
+type Breakpoint = {
+  aqiLow: number;
+  aqiHigh: number;
+  concentrationLow: number;
+  concentrationHigh: number;
+};
+
 import { onMounted, ref, watch } from "vue";
 import axios from "axios";
 
@@ -44,6 +51,52 @@ const updateTheme = (aqiValue: number) => {
   }
 };
 
+function calculatePollutant(usaqi: number, pollutant: "PM2.5" | "PM10"): number | null {
+  // Define the breakpoints for PM2.5
+  const breakpointsPM25: Breakpoint[] = [
+    { aqiLow: 0, aqiHigh: 50, concentrationLow: 0.0, concentrationHigh: 12.0 },
+    { aqiLow: 51, aqiHigh: 100, concentrationLow: 12.1, concentrationHigh: 35.4 },
+    { aqiLow: 101, aqiHigh: 150, concentrationLow: 35.5, concentrationHigh: 55.4 },
+    { aqiLow: 151, aqiHigh: 200, concentrationLow: 55.5, concentrationHigh: 150.4 },
+    { aqiLow: 201, aqiHigh: 300, concentrationLow: 150.5, concentrationHigh: 250.4 },
+    { aqiLow: 301, aqiHigh: 400, concentrationLow: 250.5, concentrationHigh: 350.4 },
+    { aqiLow: 401, aqiHigh: 500, concentrationLow: 350.5, concentrationHigh: 500.4 },
+  ];
+
+  // Define the breakpoints for PM10
+  const breakpointsPM10: Breakpoint[] = [
+    { aqiLow: 0, aqiHigh: 50, concentrationLow: 0, concentrationHigh: 54 },
+    { aqiLow: 51, aqiHigh: 100, concentrationLow: 55, concentrationHigh: 154 },
+    { aqiLow: 101, aqiHigh: 150, concentrationLow: 155, concentrationHigh: 254 },
+    { aqiLow: 151, aqiHigh: 200, concentrationLow: 255, concentrationHigh: 354 },
+    { aqiLow: 201, aqiHigh: 300, concentrationLow: 355, concentrationHigh: 424 },
+    { aqiLow: 301, aqiHigh: 400, concentrationLow: 425, concentrationHigh: 504 },
+    { aqiLow: 401, aqiHigh: 500, concentrationLow: 505, concentrationHigh: 604 },
+  ];
+
+  // Select the appropriate breakpoints based on the pollutant
+  const breakpoints = pollutant === "PM2.5" ? breakpointsPM25 : breakpointsPM10;
+
+  // Find the breakpoint range that includes the given USAQI value
+  const breakpoint = breakpoints.find((bp) => usaqi >= bp.aqiLow && usaqi <= bp.aqiHigh);
+
+  if (!breakpoint) {
+    // Return null if USAQI is out of range
+    return null;
+  }
+
+  const { aqiLow, aqiHigh, concentrationLow, concentrationHigh } = breakpoint;
+
+  // Apply the interpolation formula
+  const concentration =
+    ((usaqi - aqiLow) / (aqiHigh - aqiLow)) * (concentrationHigh - concentrationLow) +
+    concentrationLow;
+
+  return parseFloat(concentration.toFixed(2)); // Round to 2 decimal places for readability
+}
+
+// const pollutants = ["pm25", "pm10", "o3", "no2", "so2", "co"];
+
 const fetchData = async () => {
   try {
     const response = await axios.get(config.public.backendUrl);
@@ -51,9 +104,9 @@ const fetchData = async () => {
 
     // Update values dynamically
     aqi.value = data.pollution.aqius;
-    pollutant.value = data.cnaqi.dominentpol === "pm25" ? "PM2.5" : "PM10";
+    pollutant.value = data.pollution.mainus === "p2" ? "PM2.5" : "PM10";
     concentration.value =
-      data.cnaqi.dominentpol === "pm25" ? data.cnaqi.iaqi.pm25.v : data.cnaqi.pm10.v;
+      calculatePollutant(data.pollution.aqius, pollutant.value as "PM2.5" | "PM10") || 0;
     temperature.value = data.weather.tp;
     windSpeed.value = data.weather.ws;
     humidity.value = data.weather.hu;
