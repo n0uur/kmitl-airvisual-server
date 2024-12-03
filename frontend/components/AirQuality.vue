@@ -51,8 +51,9 @@ const fetchData = async () => {
 
     // Update values dynamically
     aqi.value = data.pollution.aqius;
-    pollutant.value = data.pollution.mainus === "p2" ? "PM2.5" : "PM10";
-    concentration.value = data.pollution.aqius; // Assuming 'aqius' is a proxy for concentration
+    pollutant.value = data.cnaqi.dominentpol === "pm25" ? "PM2.5" : "PM10";
+    concentration.value =
+      data.cnaqi.dominentpol === "pm25" ? data.cnaqi.iaqi.pm25.v : data.cnaqi.pm10.v;
     temperature.value = data.weather.tp;
     windSpeed.value = data.weather.ws;
     humidity.value = data.weather.hu;
