@@ -1,61 +1,81 @@
 <script setup lang="ts">
+import {onMounted, ref, watch} from 'vue';
+import axios from 'axios';
 
-import {ref, watch} from 'vue';
-
-const aqi = ref(91);
+// Define refs for data
+const aqi = ref(0);
 const level = ref('');
 const pollutant = ref('PM2.5');
-const concentration = ref(30.5);
-const temperature = ref(32);
-const windSpeed = ref(14.8);
-const humidity = ref(46);
+const concentration = ref(0);
+const temperature = ref(0);
+const windSpeed = ref(0);
+const humidity = ref(0);
 
 const aqiCardStyle = ref({backgroundColor: '', color: ''});
 const aqiNumCardStyle = ref({backgroundColor: ''});
 
 const updateTheme = (aqiValue: number) => {
   if (aqiValue <= 50) {
-    // Soft green
     aqiCardStyle.value = {backgroundColor: '#b4de71', color: '#364222'};
     aqiNumCardStyle.value = {backgroundColor: '#94bf52'};
     level.value = 'ดี';
   } else if (aqiValue <= 100) {
-    // Soft yellow
     aqiCardStyle.value = {backgroundColor: '#f8e473', color: '#4a401e'};
     aqiNumCardStyle.value = {backgroundColor: '#e7c047'};
     level.value = 'ปานกลาง';
   } else if (aqiValue <= 150) {
-    // Warm orange
     aqiCardStyle.value = {backgroundColor: '#f1a064', color: '#48301e'};
     aqiNumCardStyle.value = {backgroundColor: '#e38443'};
     level.value = 'มีผลกระทบต่อผู้ป่วยหรือร่างกายอ่อนแอ';
   } else if (aqiValue <= 200) {
-    // Muted red
     aqiCardStyle.value = {backgroundColor: '#ec736e', color: '#ffffff'};
     aqiNumCardStyle.value = {backgroundColor: '#d75755'};
     level.value = 'มีผลกระทบต่อทุกคน';
   } else if (aqiValue <= 300) {
-    // Vibrant purple
     aqiCardStyle.value = {backgroundColor: '#9a5fb5', color: '#ffffff'};
     aqiNumCardStyle.value = {backgroundColor: '#835f99'};
     level.value = 'มีผลกระทบต่อทุกคนอย่างรุนแรง';
   } else {
-    // Deep maroon
     aqiCardStyle.value = {backgroundColor: '#a07583', color: '#ffffff'};
     aqiNumCardStyle.value = {backgroundColor: '#895e6c'};
     level.value = 'อันตราย';
   }
 };
 
+const fetchData = async () => {
+  try {
+    const response = await axios.get('http://localhost:3100/');
+    const data = response.data;
+
+    // Update values dynamically
+    aqi.value = data.pollution.aqius;
+    pollutant.value = data.pollution.mainus === 'p2' ? 'PM2.5' : 'PM10';
+    concentration.value = data.pollution.aqius; // Assuming 'aqius' is a proxy for concentration
+    temperature.value = data.weather.tp;
+    windSpeed.value = data.weather.ws;
+    humidity.value = data.weather.hu;
+
+    // Update the theme based on AQI
+    updateTheme(aqi.value);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+};
 
 // Watch the AQI value and update the theme dynamically
 watch(aqi, (newAqi) => {
   updateTheme(newAqi);
 });
 
+// Fetch data on component mount
+onMounted(() => {
+  fetchData();
+});
+
 // Initialize the theme
 updateTheme(aqi.value);
 </script>
+
 
 <template>
   <div
