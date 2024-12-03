@@ -8,7 +8,9 @@ RUN bun install --frozen-lockfile
 FROM base AS production
 COPY . /app
 COPY --from=install /app/node_modules /app/node_modules
-COPY .env /app/.env
+
+# Copy if there is .env file
+COPY .en[v] /app
 
 ENV NODE_ENV=production
 ENV PORT=80
