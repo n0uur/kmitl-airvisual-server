@@ -6,7 +6,7 @@ const cron = require("node-cron");
 const Data = require("./models/Data");
 
 const app = express();
-const port = 3100;
+const port = process.env.PORT || 3100;
 const apiUrl = `http://api.airvisual.com/v2/nearest_city?lat=13.721434635446425&lon=100.78113540955499&key=${process.env.API_KEY}`;
 
 // MongoDB Connection URI using environment variables
