@@ -31,6 +31,7 @@ const dataSchema = new mongoose.Schema({
     location: locationSchema,
     pollution: pollutionSchema,
     weather: weatherSchema,
+    saved_time: { type: Date, required: true },
 });
 
 const Data = mongoose.model('Data', dataSchema);

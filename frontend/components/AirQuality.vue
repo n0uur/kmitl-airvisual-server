@@ -7,6 +7,7 @@ type Breakpoint = {
 };
 
 import { onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import axios from "axios";
 
 const config = useRuntimeConfig();
@@ -15,10 +16,12 @@ const config = useRuntimeConfig();
 const aqi = ref(0);
 const level = ref("");
 const pollutant = ref("PM2.5");
+const icon = ref("https://www.airvisual.com/images/01d.png");
 const concentration = ref(0);
 const temperature = ref(0);
 const windSpeed = ref(0);
 const humidity = ref(0);
+const saved_time = ref("");
 
 const aqiCardStyle = ref({ backgroundColor: "", color: "" });
 const aqiNumCardStyle = ref({ backgroundColor: "" });
@@ -111,6 +114,17 @@ const fetchData = async () => {
     windSpeed.value = data.weather.ws;
     humidity.value = data.weather.hu;
 
+    // Convert saved_time to +7 timezone and human-readable format
+    const savedTimeUTC = new Date(data.saved_time); // Convert to Date object
+    const savedTimeLocal = new Date(savedTimeUTC.getTime() + 7 * 60 * 60 * 1000); // Adjust to UTC+7
+    saved_time.value = savedTimeLocal.toLocaleString("en-US", {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: "UTC",
+    });
+
+    icon.value = "https://www.airvisual.com/images/" + data.weather.ic + ".png";
+
     // Update the theme based on AQI
     updateTheme(aqi.value);
   } catch (error) {
@@ -147,35 +161,40 @@ updateTheme(aqi.value);
         <div>{{ concentration }} µg/m<sup>3</sup></div>
       </div>
     </div>
-    <div class="mt-4 px-6 flex justify-between text-gray-700 bg-white min-h-[44px] font-semibold">
-      <div class="flex items-center">
-        <img class="max-w-[32px]" src="https://www.airvisual.com/images/01d.png" alt="" />
-        <span class="ml-2">{{ temperature }}°</span>
-      </div>
-      <div class="flex items-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.5"
-          stroke="currentColor"
-          class="w-6 h-6 text-slate-400 transform rotate-45"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.39L9.32 21.75a3.001 3.001 0 01-2.12 0 3 3 0 01-2.12-2.12v-2.37L2.35 12l3.97-5.96a3 3 0 015.15 0l5.56 8.34z"
+    <div class="px-6 py-1 flex flex-col bg-white min-h-[44px] font-semibold">
+      <div class="flex flex-row justify-between">
+        <div class="flex items-center">
+          <img class="max-w-[32px]" alt="" :src="icon" />
+          <span class="ml-2">{{ temperature }}°</span>
+        </div>
+        <div class="flex items-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="w-6 h-6 text-slate-400 transform rotate-45"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.39L9.32 21.75a3.001 3.001 0 01-2.12 0 3 3 0 01-2.12-2.12v-2.37L2.35 12l3.97-5.96a3 3 0 015.15 0l5.56 8.34z"
+            />
+          </svg>
+          <span class="ml-2">{{ windSpeed }} km/h</span>
+        </div>
+        <div class="flex items-center">
+          <img
+            class="h-[24px]"
+            src="https://www.iqair.com/dl/web/svg/ic-humidity-2-solid-weather-blue-16.svg"
+            alt=""
           />
-        </svg>
-        <span class="ml-2">{{ windSpeed }} km/h</span>
+          <span class="ml-2">{{ humidity }}%</span>
+        </div>
       </div>
-      <div class="flex items-center">
-        <img
-          class="h-[24px]"
-          src="https://www.iqair.com/dl/web/svg/ic-humidity-2-solid-weather-blue-16.svg"
-          alt=""
-        />
-        <span class="ml-2">{{ humidity }}%</span>
+      <div class="font-thin text-[10px] text-gray-800 mt-0.5">
+        <p>ข้อมูลเมื่อเวลา: {{ saved_time }}</p>
       </div>
     </div>
   </div>
