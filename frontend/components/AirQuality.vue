@@ -6,9 +6,15 @@ type Breakpoint = {
   concentrationHigh: number;
 };
 
-import { onMounted, ref, watch } from "vue";
-import { ref, watch } from "vue";
 import axios from "axios";
+import dayjs from "dayjs";
+import "dayjs/locale/th";
+import relativeTime from "dayjs/plugin/relativeTime";
+import buddhistEra from "dayjs/plugin/buddhistEra";
+
+dayjs.locale("th");
+dayjs.extend(relativeTime);
+dayjs.extend(buddhistEra);
 
 const config = useRuntimeConfig();
 
@@ -114,14 +120,8 @@ const fetchData = async () => {
     windSpeed.value = data.weather.ws;
     humidity.value = data.weather.hu;
 
-    // Convert saved_time to +7 timezone and human-readable format
-    const savedTimeUTC = new Date(data.saved_time); // Convert to Date object
-    const savedTimeLocal = new Date(savedTimeUTC.getTime() + 7 * 60 * 60 * 1000); // Adjust to UTC+7
-    saved_time.value = savedTimeLocal.toLocaleString("en-US", {
-      dateStyle: "medium",
-      timeStyle: "short",
-      timeZone: "UTC",
-    });
+    const lastUpdate = dayjs(data.pollution.ts);
+    saved_time.value = `${lastUpdate.format("D MMMM BBBB H:MM น.")} - ${lastUpdate.fromNow()}`;
 
     icon.value = "https://www.airvisual.com/images/" + data.weather.ic + ".png";
 
