@@ -11,18 +11,30 @@ const apiUrl = `http://api.airvisual.com/v2/nearest_city?lat=13.721434635446425&
 
 // MongoDB Connection URI using environment variables
 const dbURI = process.env.DB_CONNECTION_STRING;
-console.log(dbURI);
+// const dbURI = `mongodb://${process.env.DB_HOSTNAME}:${process.env.DB_PORT}/${process.env.DB_DATABASE}`;
+console.log('This is connection string: ' + dbURI);
 // Connect to MongoDB
 mongoose
   .connect(dbURI)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("Failed to connect to MongoDB:", err));
 
-// Function to fetch and update data every 10 minutes
 const fetchAndUpdateData = async () => {
   try {
     const response = await axios.get(apiUrl);
     const data = response.data.data;
+
+    // Function to round a date object to the nearest 10 minutes
+    const roundToNearestTenMinutes = (date) => {
+      const minutes = date.getMinutes();
+      const roundedMinutes = Math.round(minutes / 10) * 10;
+      date.setMinutes(roundedMinutes, 0, 0); // Reset seconds and milliseconds
+      return date;
+    };
+
+    // Get the current time and round it
+    const currentTime = new Date();
+    const roundedTime = roundToNearestTenMinutes(currentTime);
 
     const newData = {
       city: data.city,
@@ -31,6 +43,7 @@ const fetchAndUpdateData = async () => {
       location: data.location,
       pollution: data.current.pollution,
       weather: data.current.weather,
+      saved_time: roundedTime,
     };
 
     // Replace the existing data in the database
