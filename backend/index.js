@@ -55,6 +55,12 @@ const fetchAndUpdateData = async () => {
 
     await redis.set("air-quality-api", JSON.stringify(newData));
     console.log("Data updated successfully");
+
+    try {
+      await redis.set("air-quality-api-last-update", dayjs().toISOString());
+    } catch (error) {
+      console.error("Error setting last update:", error);
+    }
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -71,10 +77,18 @@ app.get("/", async (req, res) => {
   try {
     const lastUpdate = await redis
       .get("air-quality-api-last-update")
-      .then((data) => dayjs(data))
-      .catch(() => {});
+      .then((data) => {
+        return data ? dayjs(data) : null;
+      })
+      .catch(() => null);
+
     if (!lastUpdate || dayjs().diff(lastUpdate, "minutes") > 10) {
-      await fetchAndUpdateData();
+      try {
+        await fetchAndUpdateData();
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        return res.status(500).json({ message: "Internal server error", error });
+      }
     }
 
     // const data = await Data.findOne({});
@@ -84,13 +98,7 @@ app.get("/", async (req, res) => {
     }
     res.json(JSON.parse(data));
   } catch (error) {
-    res.status(500).json({ message: "Error fetching data", error });
-  }
-
-  try {
-    await redis.set("air-quality-api-last-update", dayjs().toISOString());
-  } catch (error) {
-    console.error("Error setting last update:", error);
+    res.status(500).json({ message: "Internal server error", error });
   }
 });
 
