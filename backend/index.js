@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
@@ -9,16 +11,13 @@ const port = process.env.PORT || 3100;
 
 const fetchAndUpdateData = async () => {
   try {
+    console.log("Fetching data...");
     const response = await axios
-      // .get(`http://api.airvisual.com/v2/nearest_city`, {
-      .get(`http://api.airvisual.com/v2/city`, {
+      .get(`http://api.openweathermap.org/data/2.5/air_pollution`, {
         params: {
-          // lat: 13.721434635446425,
-          // lon: 100.78113540955499,
-          city: "Bangkok",
-          state: "Bangkok",
-          country: "Thailand",
-          key: process.env.API_KEY,
+          lat: 13.721434635446425,
+          lon: 100.78113540955499,
+          appid: process.env.OWM_API_KEY,
         },
       })
       .catch((error) => {
@@ -28,6 +27,26 @@ const fetchAndUpdateData = async () => {
     if (!response) {
       return;
     }
+
+    const weatherResponse = await axios
+      .get(`https://api.openweathermap.org/data/3.0/onecall`, {
+        params: {
+          lat: 13.721434635446425,
+          lon: 100.78113540955499,
+          appid: process.env.OWM_API_KEY,
+          exclude: "minutely,hourly,daily",
+        },
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        return {};
+      });
+
+    if (!weatherResponse) {
+      return;
+    }
+
+    const weatherData = weatherResponse.data;
 
     const cnaqiResponse = await axios
       .get(`https://api.waqi.info/feed/geo:13.721434635446425;100.78113540955499/`, {
@@ -41,16 +60,34 @@ const fetchAndUpdateData = async () => {
         return {};
       });
 
-    const data = response.data.data;
+    const data = response.data;
 
     const newData = {
-      city: data.city,
-      state: data.state,
-      country: data.country,
-      location: data.location,
-      pollution: data.current.pollution,
-      weather: data.current.weather,
+      city: "Bangkok",
+      state: "Bangkok",
+      country: "Thailand",
+      location: null,
+      pollution: null,
+      weather: null,
       cnaqi: cnaqiResponse,
+      owm: {
+        updated: dayjs.unix(data.list[0].dt).toISOString(),
+        aqi: data.list[0].main.aqi,
+        components: data.list[0].components,
+      },
+      owmWeather: {
+        updated: dayjs.unix(weatherData.current.dt).toISOString(),
+        temp: weatherData.current.temp,
+        feels_like: weatherData.current.feels_like,
+        pressure: weatherData.current.pressure,
+        humidity: weatherData.current.humidity,
+        dew_point: weatherData.current.dew_point,
+        uvi: weatherData.current.uvi,
+        clouds: weatherData.current.clouds,
+        visibility: weatherData.current.visibility,
+        wind_speed: weatherData.current.wind_speed,
+        weather: weatherData.current.weather[0],
+      },
     };
 
     await redis.set("air-quality-api", JSON.stringify(newData));
@@ -73,7 +110,7 @@ app.get("/", async (req, res) => {
       .get("air-quality-api-last-update")
       .then((data) => dayjs(data))
       .catch(() => {});
-    if (!lastUpdate || dayjs().diff(lastUpdate, "minutes") > 10) {
+    if (!lastUpdate || dayjs().diff(lastUpdate, "minutes") > 15) {
       await fetchAndUpdateData();
     }
 
