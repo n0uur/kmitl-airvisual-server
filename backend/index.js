@@ -119,7 +119,7 @@ app.get("/", async (req, res) => {
       })
       .catch(() => null);
 
-    if (!lastUpdate || dayjs().diff(lastUpdate, "minutes") > 10) {
+    if (!lastUpdate || dayjs().diff(lastUpdate, "minutes") > 15) {
       try {
         await fetchAndUpdateData();
       } catch (error) {
