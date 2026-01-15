@@ -33,23 +33,23 @@ const aqiCardStyle = ref({ backgroundColor: "", color: "" });
 const aqiNumCardStyle = ref({ backgroundColor: "" });
 
 const updateTheme = (aqiValue: number) => {
-  if (aqiValue <= 50) {
+  if (aqiValue === 1) {
     aqiCardStyle.value = { backgroundColor: "#b4de71", color: "#364222" };
     aqiNumCardStyle.value = { backgroundColor: "#94bf52" };
     level.value = "ดี";
-  } else if (aqiValue <= 100) {
+  } else if (aqiValue === 2) {
     aqiCardStyle.value = { backgroundColor: "#f8e473", color: "#4a401e" };
     aqiNumCardStyle.value = { backgroundColor: "#e7c047" };
     level.value = "ปานกลาง";
-  } else if (aqiValue <= 150) {
+  } else if (aqiValue === 3) {
     aqiCardStyle.value = { backgroundColor: "#f1a064", color: "#48301e" };
     aqiNumCardStyle.value = { backgroundColor: "#e38443" };
     level.value = "มีผลกระทบต่อผู้ป่วยหรือร่างกายอ่อนแอ";
-  } else if (aqiValue <= 200) {
+  } else if (aqiValue === 4) {
     aqiCardStyle.value = { backgroundColor: "#ec736e", color: "#ffffff" };
     aqiNumCardStyle.value = { backgroundColor: "#d75755" };
     level.value = "มีผลกระทบต่อทุกคน";
-  } else if (aqiValue <= 300) {
+  } else if (aqiValue === 5) {
     aqiCardStyle.value = { backgroundColor: "#9a5fb5", color: "#ffffff" };
     aqiNumCardStyle.value = { backgroundColor: "#835f99" };
     level.value = "มีผลกระทบต่อทุกคนอย่างรุนแรง";
@@ -60,50 +60,6 @@ const updateTheme = (aqiValue: number) => {
   }
 };
 
-function calculatePollutant(usaqi: number, pollutant: "PM2.5" | "PM10"): number | null {
-  // Define the breakpoints for PM2.5
-  const breakpointsPM25: Breakpoint[] = [
-    { aqiLow: 0, aqiHigh: 50, concentrationLow: 0.0, concentrationHigh: 12.0 },
-    { aqiLow: 51, aqiHigh: 100, concentrationLow: 12.1, concentrationHigh: 35.4 },
-    { aqiLow: 101, aqiHigh: 150, concentrationLow: 35.5, concentrationHigh: 55.4 },
-    { aqiLow: 151, aqiHigh: 200, concentrationLow: 55.5, concentrationHigh: 150.4 },
-    { aqiLow: 201, aqiHigh: 300, concentrationLow: 150.5, concentrationHigh: 250.4 },
-    { aqiLow: 301, aqiHigh: 400, concentrationLow: 250.5, concentrationHigh: 350.4 },
-    { aqiLow: 401, aqiHigh: 500, concentrationLow: 350.5, concentrationHigh: 500.4 },
-  ];
-
-  // Define the breakpoints for PM10
-  const breakpointsPM10: Breakpoint[] = [
-    { aqiLow: 0, aqiHigh: 50, concentrationLow: 0, concentrationHigh: 54 },
-    { aqiLow: 51, aqiHigh: 100, concentrationLow: 55, concentrationHigh: 154 },
-    { aqiLow: 101, aqiHigh: 150, concentrationLow: 155, concentrationHigh: 254 },
-    { aqiLow: 151, aqiHigh: 200, concentrationLow: 255, concentrationHigh: 354 },
-    { aqiLow: 201, aqiHigh: 300, concentrationLow: 355, concentrationHigh: 424 },
-    { aqiLow: 301, aqiHigh: 400, concentrationLow: 425, concentrationHigh: 504 },
-    { aqiLow: 401, aqiHigh: 500, concentrationLow: 505, concentrationHigh: 604 },
-  ];
-
-  // Select the appropriate breakpoints based on the pollutant
-  const breakpoints = pollutant === "PM2.5" ? breakpointsPM25 : breakpointsPM10;
-
-  // Find the breakpoint range that includes the given USAQI value
-  const breakpoint = breakpoints.find((bp) => usaqi >= bp.aqiLow && usaqi <= bp.aqiHigh);
-
-  if (!breakpoint) {
-    // Return null if USAQI is out of range
-    return null;
-  }
-
-  const { aqiLow, aqiHigh, concentrationLow, concentrationHigh } = breakpoint;
-
-  // Apply the interpolation formula
-  const concentration =
-    ((usaqi - aqiLow) / (aqiHigh - aqiLow)) * (concentrationHigh - concentrationLow) +
-    concentrationLow;
-
-  return parseFloat(concentration.toFixed(2)); // Round to 2 decimal places for readability
-}
-
 // const pollutants = ["pm25", "pm10", "o3", "no2", "so2", "co"];
 
 const fetchData = async () => {
@@ -112,15 +68,20 @@ const fetchData = async () => {
     const data = response.data;
 
     // Update values dynamically
-    aqi.value = data.pollution.aqius;
-    pollutant.value = data.pollution.mainus === "p2" ? "PM2.5" : "PM10";
-    concentration.value =
-      calculatePollutant(data.pollution.aqius, pollutant.value as "PM2.5" | "PM10") || 0;
-    temperature.value = data.weather.tp;
-    windSpeed.value = data.weather.ws;
-    humidity.value = data.weather.hu;
+    aqi.value = data.owm.aqi;
+    pollutant.value = "PM2.5";
+    concentration.value = data.owm.components.pm2_5;
+    const _temperature = data.owmWeather.temp - 273.15; // Kelvin to Celsius
+    const _windSpeed = data.owmWeather.wind_speed * 3.6; // m/s to km/h
+    const _humidity = data.owmWeather.humidity; // %
+    temperature.value = Number(
+      _temperature.toLocaleString(undefined, { maximumFractionDigits: 1 })
+    );
+    windSpeed.value = Number(_windSpeed.toLocaleString(undefined, { maximumFractionDigits: 1 }));
+    humidity.value = Number(_humidity.toLocaleString(undefined, { maximumFractionDigits: 1 }));
+    icon.value = data.owmWeather.weather.icon;
 
-    const lastUpdate = dayjs(data.pollution.ts);
+    const lastUpdate = dayjs(data.owmWeather.updated);
     saved_time.value = `${lastUpdate.format("D MMMM BBBB H:MM น.")} - ${lastUpdate.fromNow()}`;
 
     icon.value = "https://www.airvisual.com/images/" + data.weather.ic + ".png";
@@ -133,7 +94,7 @@ const fetchData = async () => {
 };
 
 // Watch the AQI value and update the theme dynamically
-watch(aqi, (newAqi) => {
+watch(aqi, (newAqi: any) => {
   updateTheme(newAqi);
 });
 
@@ -152,19 +113,23 @@ updateTheme(aqi.value);
           <div class="text-3xl font-semibold text-center">
             {{ aqi }}
           </div>
-          <div class="text-xs mt-1">US AQI</div>
+          <div class="text-xs mt-1">Air Quality Index</div>
         </div>
         <div class="text-2xl font-bold">{{ level }}</div>
       </div>
       <div class="mt-4 flex flex-row gap-4 justify-between mr-10">
-        <div>สารมลพิษหลัก: {{ pollutant }}</div>
+        <div>ค่ามลพิษ: {{ pollutant }}</div>
         <div>{{ concentration }} µg/m<sup>3</sup></div>
       </div>
     </div>
-    <div class="px-6 py-1 flex flex-col bg-white min-h-[44px] font-semibold">
+    <div class="px-6 py-1 flex flex-col bg-white min-h-[44px] font-semibold text-neutral-800">
       <div class="flex flex-row justify-between">
         <div class="flex items-center">
-          <img class="max-w-[32px]" alt="" :src="icon" />
+          <img
+            class="max-w-[32px]"
+            alt=""
+            :src="`https://openweathermap.org/img/wn/${icon}@2x.png`"
+          />
           <span class="ml-2">{{ temperature }}°</span>
         </div>
         <div class="flex items-center">
