@@ -33,29 +33,29 @@ const aqiCardStyle = ref({ backgroundColor: "", color: "" });
 const aqiNumCardStyle = ref({ backgroundColor: "" });
 
 const updateTheme = (aqiValue: number) => {
-  if (aqiValue === 1) {
-    aqiCardStyle.value = { backgroundColor: "#b4de71", color: "#364222" };
-    aqiNumCardStyle.value = { backgroundColor: "#94bf52" };
+  if (aqiValue <= 50) {
+    aqiCardStyle.value = { backgroundColor: "#a8e05f", color: "#364222" }; // Green
+    aqiNumCardStyle.value = { backgroundColor: "#87c13c" };
     level.value = "ดี";
-  } else if (aqiValue === 2) {
-    aqiCardStyle.value = { backgroundColor: "#f8e473", color: "#4a401e" };
-    aqiNumCardStyle.value = { backgroundColor: "#e7c047" };
+  } else if (aqiValue <= 100) {
+    aqiCardStyle.value = { backgroundColor: "#fdd64b", color: "#4a401e" }; // Yellow
+    aqiNumCardStyle.value = { backgroundColor: "#efbe1d" };
     level.value = "ปานกลาง";
-  } else if (aqiValue === 3) {
-    aqiCardStyle.value = { backgroundColor: "#f1a064", color: "#48301e" };
-    aqiNumCardStyle.value = { backgroundColor: "#e38443" };
+  } else if (aqiValue <= 150) {
+    aqiCardStyle.value = { backgroundColor: "#ff9b57", color: "#48301e" }; // Orange
+    aqiNumCardStyle.value = { backgroundColor: "#f27e2f" };
     level.value = "มีผลกระทบต่อผู้ป่วยหรือร่างกายอ่อนแอ";
-  } else if (aqiValue === 4) {
-    aqiCardStyle.value = { backgroundColor: "#ec736e", color: "#ffffff" };
-    aqiNumCardStyle.value = { backgroundColor: "#d75755" };
+  } else if (aqiValue <= 200) {
+    aqiCardStyle.value = { backgroundColor: "#fe6a69", color: "#ffffff" }; // Red
+    aqiNumCardStyle.value = { backgroundColor: "#e84b50" };
     level.value = "มีผลกระทบต่อทุกคน";
-  } else if (aqiValue === 5) {
-    aqiCardStyle.value = { backgroundColor: "#9a5fb5", color: "#ffffff" };
-    aqiNumCardStyle.value = { backgroundColor: "#835f99" };
+  } else if (aqiValue <= 300) {
+    aqiCardStyle.value = { backgroundColor: "#a97abc", color: "#ffffff" }; // Purple
+    aqiNumCardStyle.value = { backgroundColor: "#8a5d9d" };
     level.value = "มีผลกระทบต่อทุกคนอย่างรุนแรง";
   } else {
-    aqiCardStyle.value = { backgroundColor: "#a07583", color: "#ffffff" };
-    aqiNumCardStyle.value = { backgroundColor: "#895e6c" };
+    aqiCardStyle.value = { backgroundColor: "#a07684", color: "#ffffff" }; // Maroon
+    aqiNumCardStyle.value = { backgroundColor: "#8f5c6b" };
     level.value = "อันตราย";
   }
 };
