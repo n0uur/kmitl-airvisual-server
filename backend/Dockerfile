@@ -17,4 +17,4 @@ ENV PORT=80
 
 EXPOSE 80
 
-CMD ["bun", "server.js"]
+CMD ["bun", "cluster.js"]
