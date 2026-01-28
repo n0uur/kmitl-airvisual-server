@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "bun --watch index.js",
-    "start": "bun index.js",
+    "start": "bun cluster.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
