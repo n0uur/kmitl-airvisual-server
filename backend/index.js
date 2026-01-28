@@ -60,6 +60,25 @@ const fetchAndUpdateData = async () => {
         return {};
       });
 
+    const sciraAQIResponse = await axios
+      .get(`http://10.141.3.68:8470/api/summary`, {
+        headers: {
+          "X-API-Key": process.env.SCIRA_API_KEY,
+        },
+      })
+      .then((response) => response.data)
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        return {};
+      });
+    const worstArea = sciraAQIResponse.top5_areas.reduce((acc, area) => {
+      return acc.aqi > area.aqi ? acc : area;
+    }, sciraAQIResponse.top5_areas[0]);
+
+    if (!sciraAQIResponse) {
+      return;
+    }
+
     const data = response.data;
 
     const newData = {
@@ -87,6 +106,11 @@ const fetchAndUpdateData = async () => {
         visibility: weatherData.current.visibility,
         wind_speed: weatherData.current.wind_speed,
         weather: weatherData.current.weather[0],
+      },
+      sciraAQI: {
+        timestamp: dayjs(sciraAQIResponse.timestamp).toISOString(),
+        aqi: worstArea.aqi,
+        pm25: worstArea.pm25,
       },
     };
 
