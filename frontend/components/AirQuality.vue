@@ -68,9 +68,9 @@ const fetchData = async () => {
     const data = response.data;
 
     // Update values dynamically
-    aqi.value = data.owm.aqi;
+    aqi.value = data.sciraAQI?.aqi;
     pollutant.value = "PM2.5";
-    concentration.value = data.owm.components.pm2_5;
+    concentration.value = data.sciraAQI?.pm25;
     const _temperature = data.owmWeather.temp - 273.15; // Kelvin to Celsius
     const _windSpeed = data.owmWeather.wind_speed * 3.6; // m/s to km/h
     const _humidity = data.owmWeather.humidity; // %
@@ -113,7 +113,7 @@ updateTheme(aqi.value);
           <div class="text-3xl font-semibold text-center">
             {{ aqi }}
           </div>
-          <div class="text-xs mt-1">Air Quality Index</div>
+          <div class="text-xs mt-1">AQI</div>
         </div>
         <div class="text-2xl font-bold">{{ level }}</div>
       </div>
